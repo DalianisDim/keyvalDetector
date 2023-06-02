@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/olekukonko/tablewriter"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -81,6 +83,9 @@ func initConfig() {
 
 func keyvalDetector() error {
 
+	var configMapsOut [][]string
+	var secretsOut [][]string
+
 	// uses the current context in kubeconfig
 	// path-to-kubeconfig -- for example, /root/.kube/config
 	config, _ := clientcmd.BuildConfigFromFlags("", homedir.HomeDir()+defaultKubeConfigPath)
@@ -123,63 +128,61 @@ func keyvalDetector() error {
 			panic(err)
 		}
 
-		// If there's no pod in current namespace any configmap/secret are not used (except defaults)
-		if len(pods.Items) == 0 {
-
-			// Print the configmaps' names
-			for _, configmap := range configmaps.Items {
-				if !isDefaultConfigMap(configmap.GetName()) {
-					fmt.Println("ConfigMap \"" + configmap.GetName() + "\" in namespace \"" + namespace.GetName() + "\" not used")
-				}
-			}
-
-			// Print the secrets' names.
-			for _, secret := range secrets.Items {
-				if !isDefaultSecret(secret.GetName()) {
-					fmt.Println("Secret \"" + secret.GetName() + "\" in namespace \"" + namespace.GetName() + "\" not used")
-				}
-			}
-		}
-
-		// If there is any pod in current namespace
 		// Iterate over the pods
 		// Check each pod's Volumes and store the configmaps and secrets mounted names on a separate slice
 		// Compare lists of configmaps/secrets with mounted ones
-		if len(pods.Items) != 0 {
-			// Foreach pod
-			for _, pod := range pods.Items {
-				// Foreach pod's volume
-				for _, volume := range pod.Spec.Volumes {
-					if volume.ConfigMap != nil {
-						namespaceMountedConfigMaps = append(namespaceMountedConfigMaps, volume.ConfigMap.Name)
-					}
-					if volume.Secret != nil {
-						namespaceMountedSecrets = append(namespaceMountedSecrets, volume.Secret.SecretName)
-					}
+
+		for _, pod := range pods.Items {
+			// Foreach pod's volume
+			for _, volume := range pod.Spec.Volumes {
+				if volume.ConfigMap != nil {
+					namespaceMountedConfigMaps = append(namespaceMountedConfigMaps, volume.ConfigMap.Name)
+				}
+				if volume.Secret != nil {
+					namespaceMountedSecrets = append(namespaceMountedSecrets, volume.Secret.SecretName)
 				}
 			}
 		}
 
-		// I need check if configmaps/secrets of this namespace
+		// Check if configmaps/secrets of this namespace
 		// are in namespaceMountedConfigMaps/namespaceMountedSecrets
-
 		for _, configmap := range configmaps.Items {
 			if !contains(namespaceMountedConfigMaps, configmap.GetName()) {
-				if !isDefaultConfigMap(configmap.GetName()) {
-					println("ConfigMap \"" + configmap.GetName() + "\" in namespace \"" + namespace.GetName() + "\" not used")
+				if !isSystemConfigMap(configmap.GetName()) {
+					configMapsOut = append(configMapsOut, []string{configmap.GetName(), namespace.GetName()})
 				}
 			}
 		}
 
 		for _, secret := range secrets.Items {
-			if !isDefaultSecret(secret.GetName()) {
+			if !isSystemSecret(secret.GetName()) {
 				if !contains(namespaceMountedSecrets, secret.GetName()) {
-					println("Secret \"" + secret.GetName() + "\" in namespace \"" + namespace.GetName() + "\" not used")
+					secretsOut = append(secretsOut, []string{secret.GetName(), namespace.GetName()})
 				}
 			}
 		}
 
 	} // END - Foreach namespace
+
+	// Construct ConfigMaps table
+	configMapsTable := tablewriter.NewWriter(os.Stdout)
+	configMapsTable.SetHeader([]string{"Name", "Namespace"})
+
+	for _, v := range configMapsOut {
+		configMapsTable.Append(v)
+	}
+	fmt.Print("Unused ConfigMaps: \n")
+	configMapsTable.Render() // Send output
+
+	// Construct Secrets table
+	secretsTable := tablewriter.NewWriter(os.Stdout)
+	secretsTable.SetHeader([]string{"Name", "Namespace"})
+
+	for _, v := range secretsOut {
+		secretsTable.Append(v)
+	}
+	fmt.Print("\n\nUnused Secrets: \n")
+	secretsTable.Render() // Send output
 
 	return nil
 }
@@ -188,8 +191,8 @@ func keyvalDetector() error {
 
 // }
 
-func isDefaultConfigMap(configmap string) bool {
-	defaultConfigMaps := []string{"kube-root-ca.crt", "foobar"}
+func isSystemConfigMap(configmap string) bool {
+	defaultConfigMaps := []string{"kube-root-ca.crt", "cluster-info", "kubelet-config", "kubeadm-config"}
 
 	for _, value := range defaultConfigMaps {
 		if configmap == value {
@@ -199,7 +202,7 @@ func isDefaultConfigMap(configmap string) bool {
 	return false
 }
 
-func isDefaultSecret(secret string) bool {
+func isSystemSecret(secret string) bool {
 	defaultSecrets := []string{"foobar"}
 
 	for _, value := range defaultSecrets {
