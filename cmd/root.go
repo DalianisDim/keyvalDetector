@@ -104,11 +104,11 @@ func keyvalDetector() error {
 
 	// Foreach namespace
 	for _, namespace := range namespaces.Items {
-		// Slice to store mounted ConfigMap names
-		namespaceMountedConfigMaps := []string{}
+		// Slice to store used ConfigMap names
+		namespaceUsedConfigMaps := []string{}
 
-		// Slice to store mounted Secrets names
-		namespaceMountedSecrets := []string{}
+		// Slice to store used Secrets names
+		namespaceUsedSecrets := []string{}
 
 		// List all pods in current namespace
 		pods, err := clientset.CoreV1().Pods(namespace.GetName()).List(context.Background(), metav1.ListOptions{})
@@ -131,23 +131,44 @@ func keyvalDetector() error {
 		// Iterate over the pods
 		// Check each pod's Volumes and store the configmaps and secrets mounted names on a separate slice
 		// Compare lists of configmaps/secrets with mounted ones
-
 		for _, pod := range pods.Items {
 			// Foreach pod's volume
 			for _, volume := range pod.Spec.Volumes {
 				if volume.ConfigMap != nil {
-					namespaceMountedConfigMaps = append(namespaceMountedConfigMaps, volume.ConfigMap.Name)
+					namespaceUsedConfigMaps = append(namespaceUsedConfigMaps, volume.ConfigMap.Name)
 				}
 				if volume.Secret != nil {
-					namespaceMountedSecrets = append(namespaceMountedSecrets, volume.Secret.SecretName)
+					namespaceUsedSecrets = append(namespaceUsedSecrets, volume.Secret.SecretName)
 				}
 			}
-		}
+
+			// Foreach container in pod
+			for _, container := range pod.Spec.Containers {
+				for _, envFrom := range container.EnvFrom {
+					if envFrom.ConfigMapRef != nil {
+						namespaceUsedConfigMaps = append(namespaceUsedConfigMaps, envFrom.ConfigMapRef.Name)
+					}
+					if envFrom.SecretRef != nil {
+						namespaceUsedSecrets = append(namespaceUsedSecrets, envFrom.SecretRef.Name)
+					}
+				}
+				for _, env := range container.Env {
+					if env.ValueFrom != nil {
+						if env.ValueFrom.ConfigMapKeyRef != nil {
+							namespaceUsedConfigMaps = append(namespaceUsedConfigMaps, env.ValueFrom.ConfigMapKeyRef.Name)
+						}
+						if env.ValueFrom.SecretKeyRef != nil {
+							namespaceUsedSecrets = append(namespaceUsedSecrets, env.ValueFrom.SecretKeyRef.Name)
+						}
+					}
+				}
+			}
+		} // END - Foreach pod
 
 		// Check if configmaps/secrets of this namespace
-		// are in namespaceMountedConfigMaps/namespaceMountedSecrets
+		// are in namespaceUsedConfigMaps/namespaceUsedSecrets
 		for _, configmap := range configmaps.Items {
-			if !contains(namespaceMountedConfigMaps, configmap.GetName()) {
+			if !contains(namespaceUsedConfigMaps, configmap.GetName()) {
 				if !isSystemConfigMap(configmap.GetName()) {
 					configMapsOut = append(configMapsOut, []string{configmap.GetName(), namespace.GetName()})
 				}
@@ -156,7 +177,7 @@ func keyvalDetector() error {
 
 		for _, secret := range secrets.Items {
 			if !isSystemSecret(secret.GetName()) {
-				if !contains(namespaceMountedSecrets, secret.GetName()) {
+				if !contains(namespaceUsedSecrets, secret.GetName()) {
 					secretsOut = append(secretsOut, []string{secret.GetName(), namespace.GetName()})
 				}
 			}
