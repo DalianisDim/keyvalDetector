@@ -27,7 +27,7 @@ jobs:
 
     - name: Build
       run: |
-        GOOS=darwin GOARCH=amd64 go build -v ./... keyvalDetector
+        GOOS=darwin GOARCH=amd64 go build keyvalDetector
 
     - name: Test with the Go CLI
       run: go test
