@@ -1,0 +1,59 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  publish:
+    name: Publish for ${{ matrix.asset_name}}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact_name: keyvalDetector
+            asset_name: keyvalDetector-linux-amd64
+            build_params: "GOOS=linux GOARCH=amd64"
+          # - os: windows-latest
+          #   artifact_name: keyvalDetector.exe
+          #   asset_name: keyvalDetector-windows-amd64
+          #   build_params: "GOOS=windows GOARCH=amd64"
+          - os: macos-latest
+            artifact_name: keyvalDetector
+            asset_name: keyvalDetector-macos-amd64
+            build_params: "GOOS=darwin GOARCH=amd64"
+          - os: macos-latest
+            artifact_name: keyvalDetector
+            asset_name: keyvalDetector-macos-arm64
+            build_params: "GOOS=darwin GOARCH=arm64"
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.20'
+        cache-dependency-path: go.sum
+
+    - name: Install dependencies
+      run: |
+        go get .
+
+    - name: Build
+      run: |
+        ${{ matrix.build_params }} go build --ldflags="-X 'keyvalDetector/cmd.buildTimeVersion=${{ github.ref_name }}'"
+
+    - name: Test with the Go CLI
+      run: go test
+
+    - uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: ${{ matrix.artifact_name }}
+        asset_name: ${{ matrix.asset_name }}
+        tag: ${{ github.ref }}
+        overwrite: true
+        body: "Version ${{ github.ref_name }}"
