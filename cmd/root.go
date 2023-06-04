@@ -54,7 +54,7 @@ func init() {
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 
-	rootCmd.Flags().StringVarP(&cfgFile, "config", "c", "", "Config file (default is $HOME/.keyvalDetector.yaml)")
+	// rootCmd.Flags().StringVarP(&cfgFile, "config", "c", "", "Config file (default is $HOME/.keyvalDetector.yaml)")
 	rootCmd.Flags().BoolVarP(&version, "version", "v", version, "Print the version and exit.")
 }
 

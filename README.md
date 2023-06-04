@@ -16,7 +16,6 @@ kubevalDetector
 keyvalDetector [flags]
 
 Flags:
-  -c, --config string   Config file (default is $HOME/.keyvalDetector.yaml)
   -h, --help            help for keyvalDetector
   -v, --version         Print the version and exit.
 ```
