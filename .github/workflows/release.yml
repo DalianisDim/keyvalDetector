@@ -24,13 +24,12 @@ jobs:
     - name: Install dependencies
       run: |
         go get .
-        go get github.com/spf13/cobra
-        go get github.com/olekukonko/tablewriter
+  # go get github.com/spf13/cobra
+  # go get github.com/olekukonko/tablewriter
 
     - name: Build
-      uses: actions-rs/cargo@v1
-      with:
-        command: GOOS=darwin GOARCH=amd64 go build -v ./...
+      run: |
+        GOOS=darwin GOARCH=amd64 go build -v ./...
 
     - name: Test with the Go CLI
       run: go test
