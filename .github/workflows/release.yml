@@ -24,12 +24,10 @@ jobs:
     - name: Install dependencies
       run: |
         go get .
-  # go get github.com/spf13/cobra
-  # go get github.com/olekukonko/tablewriter
 
     - name: Build
       run: |
-        GOOS=darwin GOARCH=amd64 go build -v ./...
+        GOOS=darwin GOARCH=amd64 go build -v ./... keyvalDetector
 
     - name: Test with the Go CLI
       run: go test
@@ -37,9 +35,6 @@ jobs:
     - uses: svenstaro/upload-release-action@v2
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: target/release/keyvalDetector
+        file: keyvalDetector
         asset_name: keyvalDetector-darwin-amd64
         tag: ${{ github.ref }}
-
-    # - name: Test
-    #   run: go test -v ./...
