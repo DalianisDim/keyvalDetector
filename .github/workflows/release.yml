@@ -36,5 +36,5 @@ jobs:
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
         file: keyvalDetector
-        asset_name: keyvalDetector-darwin-amd64
+        asset_name: keyvalDetector-darwin-amd64-${{ github.ref }}
         tag: ${{ github.ref }}
