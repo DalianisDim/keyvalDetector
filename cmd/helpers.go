@@ -18,3 +18,9 @@ func contains(s []string, e string) bool {
 	}
 	return false
 }
+
+// Color codes: https://github.com/fatih/color/blob/main/color.go#L69
+func colorPrint(colorCode int, input string) {
+	colored := fmt.Sprintf("\x1b[%dm%s\x1b[0m", colorCode, input)
+	fmt.Print(colored)
+}
