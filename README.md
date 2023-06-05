@@ -7,7 +7,7 @@
 It uses the current Kubernetes context by default, therefore in its simplest form it can be ran without any flag:
 
 ```
-kubevalDetector
+keyvalDetector
 ```
 
 
