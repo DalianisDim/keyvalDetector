@@ -1,6 +1,6 @@
 
 
-# kubevalDetector
+# keyvalDetector
 
 **keyvalDetector** will scan your Kubernetes cluster for ConfigMaps and Secrets that are not used by Pods.
 
