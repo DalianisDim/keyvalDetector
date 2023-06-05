@@ -229,25 +229,13 @@ func keyvalDetector() error {
 // }
 
 func isSystemConfigMap(configmap string) bool {
-	defaultConfigMaps := []string{"kube-root-ca.crt", "cluster-info", "kubelet-config", "kubeadm-config"}
-
-	for _, value := range defaultConfigMaps {
-		if configmap == value {
-			return true
-		}
-	}
-	return false
+	systemConfigMaps := []string{"kube-root-ca.crt", "cluster-info", "kubelet-config", "kubeadm-config"}
+	return contains(systemConfigMaps, configmap)
 }
 
 func isSystemSecret(secret string) bool {
-	defaultSecrets := []string{"foobar"}
-
-	for _, value := range defaultSecrets {
-		if secret == value {
-			return true
-		}
-	}
-	return false
+	systemSecrets := []string{"foobar"}
+	return contains(systemSecrets, secret)
 }
 
 func getCurrentK8sContext(kubeConfigPath string) string {

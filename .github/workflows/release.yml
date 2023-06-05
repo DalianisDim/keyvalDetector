@@ -42,12 +42,13 @@ jobs:
       run: |
         go get .
 
+    - name: Test with the Go CLI
+      run: go test ./... -v
+
     - name: Build
       run: |
         ${{ matrix.build_params }} go build --ldflags="-X 'keyvalDetector/cmd.buildTimeVersion=${{ github.ref_name }}'"
 
-    - name: Test with the Go CLI
-      run: go test
 
     - uses: svenstaro/upload-release-action@v2
       with:
