@@ -22,7 +22,7 @@ import (
 var cfgFile string
 var version bool
 var buildTimeVersion string
-var defaultKubeConfigPath = "/.kube/config"
+var defaultKubeConfigPath = homedir.HomeDir() + "/.kube/config"
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -87,9 +87,14 @@ func keyvalDetector() error {
 	var configMapsOut [][]string
 	var secretsOut [][]string
 
+	colorPrint(32, "keyvalDetector version ")
+	fmt.Println(buildTimeVersion)
+	colorPrint(33, "Current k8s context name: ")
+	fmt.Println(getCurrentK8sContext(defaultKubeConfigPath) + "\n")
+
 	// uses the current context in kubeconfig
 	// path-to-kubeconfig -- for example, /root/.kube/config
-	config, _ := clientcmd.BuildConfigFromFlags("", homedir.HomeDir()+defaultKubeConfigPath)
+	config, _ := clientcmd.BuildConfigFromFlags("", defaultKubeConfigPath)
 
 	// creates the clientset
 	clientset, _ := kubernetes.NewForConfig(config)
@@ -193,7 +198,7 @@ func keyvalDetector() error {
 	for _, v := range configMapsOut {
 		configMapsTable.Append(v)
 	}
-	fmt.Print("Unused ConfigMaps: \n")
+	colorPrint(31, "Unused ConfigMaps: \n")
 	configMapsTable.Render() // Send output
 
 	// Construct Secrets table
@@ -203,7 +208,7 @@ func keyvalDetector() error {
 	for _, v := range secretsOut {
 		secretsTable.Append(v)
 	}
-	fmt.Print("\n\nUnused Secrets: \n")
+	colorPrint(31, "\nUnused Secrets: \n")
 	secretsTable.Render() // Send output
 
 	return nil
@@ -233,4 +238,14 @@ func isSystemSecret(secret string) bool {
 		}
 	}
 	return false
+}
+
+func getCurrentK8sContext(kubeConfigPath string) string {
+	config, _ := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+		&clientcmd.ClientConfigLoadingRules{ExplicitPath: kubeConfigPath},
+		&clientcmd.ConfigOverrides{
+			CurrentContext: "",
+		}).RawConfig()
+
+	return config.CurrentContext
 }
