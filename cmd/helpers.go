@@ -4,7 +4,12 @@ This file is part of CLI application keyvalDetector
 */
 package cmd
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+
+	"github.com/olekukonko/tablewriter"
+)
 
 func printSlice(s []string) {
 	fmt.Printf("len=%d cap=%d %v\n", len(s), cap(s), s)
@@ -23,4 +28,14 @@ func contains(s []string, e string) bool {
 func colorPrint(colorCode int, input string) {
 	colored := fmt.Sprintf("\x1b[%dm%s\x1b[0m", colorCode, input)
 	fmt.Print(colored)
+}
+
+func printTable(tabledata [][]string) {
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{"Name", "Namespace"})
+
+	for _, v := range tabledata {
+		table.Append(v)
+	}
+	table.Render() // Send output
 }

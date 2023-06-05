@@ -10,8 +10,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/olekukonko/tablewriter"
-
 	"github.com/briandowns/spinner"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -201,25 +199,12 @@ func keyvalDetector() error {
 
 	s.Stop() // stop the spinner
 
-	// Construct ConfigMaps table
-	configMapsTable := tablewriter.NewWriter(os.Stdout)
-	configMapsTable.SetHeader([]string{"Name", "Namespace"})
-
-	for _, v := range configMapsOut {
-		configMapsTable.Append(v)
-	}
+	// Render to stdout
 	colorPrint(31, "Unused ConfigMaps: \n")
-	configMapsTable.Render() // Send output
+	printTable(configMapsOut)
 
-	// Construct Secrets table
-	secretsTable := tablewriter.NewWriter(os.Stdout)
-	secretsTable.SetHeader([]string{"Name", "Namespace"})
-
-	for _, v := range secretsOut {
-		secretsTable.Append(v)
-	}
 	colorPrint(31, "\nUnused Secrets: \n")
-	secretsTable.Render() // Send output
+	printTable(secretsOut)
 
 	return nil
 }
