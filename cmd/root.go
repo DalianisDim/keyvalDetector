@@ -8,9 +8,11 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/olekukonko/tablewriter"
 
+	"github.com/briandowns/spinner"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -91,6 +93,12 @@ func keyvalDetector() error {
 	fmt.Println(buildTimeVersion)
 	colorPrint(33, "Current k8s context name: ")
 	fmt.Println(getCurrentK8sContext(defaultKubeConfigPath) + "\n")
+
+	// Build the spinner and start it
+	s := spinner.New(spinner.CharSets[26], 100*time.Millisecond)
+	s.Prefix = "Scanning cluster for unused ConfigMaps and Secrets"
+	s.FinalMSG = "Scanning cluster for unused ConfigMaps and Secrets...Complete!\n\n"
+	s.Start()
 
 	// uses the current context in kubeconfig
 	// path-to-kubeconfig -- for example, /root/.kube/config
@@ -190,6 +198,8 @@ func keyvalDetector() error {
 		}
 
 	} // END - Foreach namespace
+
+	s.Stop() // stop the spinner
 
 	// Construct ConfigMaps table
 	configMapsTable := tablewriter.NewWriter(os.Stdout)
