@@ -34,4 +34,5 @@ Flags:
 
 ## Future plans
 
+- Allow selection of context from available contexts in `~/.kube/config`
 - Delete unused ConfigMaps & Secrets
