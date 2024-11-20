@@ -16,6 +16,10 @@ jobs:
             artifact_name: keyvalDetector
             asset_name: keyvalDetector-linux-amd64
             build_params: "GOOS=linux GOARCH=amd64"
+          - os: ubuntu-latest
+            artifact_name: keyvalDetector
+            asset_name: keyvalDetector-linux-arm64
+            build_params: "GOOS=linux GOARCH=arm64"
           # - os: windows-latest
           #   artifact_name: keyvalDetector.exe
           #   asset_name: keyvalDetector-windows-amd64
